@@ -18,7 +18,7 @@ $MainContentExtractor = new \App\MainContentExtractor();
 $TextToChunk = new \App\TextToChunk();
 $Cohere = new \App\Cohere();
 
-$term = $_POST['term'] ?? $_GET['term'] ?? '';
+$query = $_POST['query'] ?? $_GET['query'] ?? '';
 $errors = [];
 
 $max_results = $_GET['max_results'] ?? $_POST['max_results'] ?? 4; // Google Search maximum results
@@ -31,7 +31,7 @@ if ($max_results > $max_chunks) {
 }
 
 $do_rerank = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? true;
-$do_rerank = (bool)$do_rerank;
+$do_rerank = (bool) $do_rerank;
 
 // $min_char The minimum number of characters a chunk must have
 // $max_char The maximum number of characters a chunk must have - must be greater than the sum of ($min_char + $max_seq)
@@ -50,11 +50,11 @@ $max_characters_output = $_GET['max_chars_output'] ?? $_POST['max_chars_output']
 $max_characters_output = (int) $max_characters_output;
 
 $all_data = [];
-if ($term) {
+if ($query) {
     $all_links = [];
     try {
         // make a search on Google and return just the links
-        $all_links = $GoogleCSE->search($term, $max_results)->getItems(true);
+        $all_links = $GoogleCSE->search($query, $max_results)->getItems(true);
     } catch (Exception $e) {
         $errors['google_cse'] = $e->getMessage();
     }
@@ -62,11 +62,12 @@ if ($term) {
         $ParallelRequest->addUrl($link);
     }
     $results = $ParallelRequest->request();
+
     $request_errors = $ParallelRequest->getError();
     if($request_errors){
         $errors[] = $request_errors;
     }
-    $max_chunks_per_url = (int) ($max_chunks / $max_results);
+    $max_chunks_per_url = (int) ($max_chunks / count($results));
     foreach ($results as $item) {
         $raw_html = $item->html;
         $url = $item->url;
@@ -74,9 +75,9 @@ if ($term) {
             $readability = $MainContentExtractor->getMainContent($raw_html);
             $main_html = $readability->getContent();
             $chunks = $TextToChunk->makeChunks($main_html, $max_chunks_per_url, $min_char, $max_char, $max_seq);
-            $all_data[] = (object)[
+            $all_data[] = (object) [
                 "url" => $url,
-                'chunks' => $chunks,
+                'chunks' => $chunks
             ];
 
         } catch (Exception $e) {
@@ -100,7 +101,7 @@ if ($term) {
             $idx++;
         }
         if ($do_rerank) {
-            $reranks = $Cohere->rerank($term, $all_chunks)['result']->results ?? [];
+            $reranks = $Cohere->rerank($query, $all_chunks)['result']->results ?? [];
         }
         $last_url = '';
         $text = '';
@@ -153,6 +154,6 @@ if ($term) {
         $data['errors'] = $errors;
     }
 }else{
-    $data = ["text" => "", "msg"=> 'No search terms were passed'];
+    $data = ["text" => "", "msg"=> 'No search query were passed'];
 }
 echo json_encode($data);
