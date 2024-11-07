@@ -74,6 +74,9 @@ if ($query) {
         try {
             $readability = $MainContentExtractor->getMainContent($raw_html);
             $main_html = $readability->getContent();
+            if(empty($main_html)){
+                $main_html = ''; // null will cause errors
+            }
             $chunks = $TextToChunk->makeChunks($main_html, $max_chunks_per_url, $min_char, $max_char, $max_seq);
             $all_data[] = (object) [
                 "url" => $url,
@@ -81,7 +84,7 @@ if ($query) {
             ];
 
         } catch (Exception $e) {
-            $errors['readability'] = $e->getMessage();
+            $errors['readability'] = $e->getMessage()." - url: $url";
         }
     } // end foreach
 
