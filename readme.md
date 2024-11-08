@@ -47,6 +47,10 @@ To rerank you will also need to configure a Cohere API key in .env.
 
 Get your Cohere API key here: https://dashboard.cohere.com/api-keys
 
+# Cybersecurity
+This project was developed mainly for home use via localhost.
+If you want to use it on a public hosting, it is recommended to add some restriction layer with login.
+
 ## License
 **MIT** - This project is licensed under the MIT License.  
 Please note that this project is currently in **beta** and is provided "as is" without warranty of any kind.
