@@ -19,6 +19,7 @@ $TextToChunk = new \App\TextToChunk();
 $Cohere = new \App\Cohere();
 
 $query = $_POST['query'] ?? $_GET['query'] ?? '';
+$language = $_GET['language']  ?? '';
 $errors = [];
 
 $max_results = $_GET['max_results'] ?? $_POST['max_results'] ?? 4; // Google Search maximum results

@@ -8,15 +8,23 @@ class GoogleCSE {
     /**
      * @throws Exception
      */
-    public function search(string $term, int $max_results, int $start = 0):GoogleCSE {
+    public function search(string $term, int $max_results, int $start = 0, $language = ''):GoogleCSE {
         if ($max_results > 10) {
            $max_results = 10; // Google doesn't allow more than 10
         }
+
+
         if ($start > 91) {
             throw new Exception("Cannot list more than 91 results");
         }
         $term = urlencode($term);
         $url = "https://www.googleapis.com/customsearch/v1?key=" . GOOGLE_SEARCH_API_KEY . "&cx=".GOOGLE_SEARCH_CX."&q=$term&num=$max_results&start=$start";
+        if($language){
+            $language = trim($language);
+            $language = substr($language, 0,2);
+            $language = urlencode($language);
+            $url .= "&hl=$language";
+        }
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,
