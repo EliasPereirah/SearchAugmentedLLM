@@ -1,8 +1,31 @@
 # SearchAugmentedLLM
-SearchAugmentedLLM empowers Large Language Models (LLMs) with relevant, up-to-date information from the web.  
+SearchAugmentedLLM empowers Large Language Models (LLMs) information from the web.  
 Given a user query, it performs a Google search, processes the top search results, chunks the content, 
 ranks by relevance, and returns the most pertinent text to provide context for improved LLM responses. 
 This tool is ideal for Retrieval Augmented Generation (RAG) applications.
+
+## Beta Warning
+This project is in beta, and may not have the quality you desire, consider other alternatives or test before implementing.
+
+## Installation
+1. Clone the repository
+```shell
+git clone https://github.com/EliasPereirah/SearchAugmentedLLM.git
+```
+2. Change directory to the project folder
+```shell
+cd SearchAugmentedLLM
+```
+
+2. Run 
+```shell
+composer install
+``` 
+
+3. Rename `.env.example` to `.env` and configure your Google CSE API key and CX ID
+4. If you want to use Cohere Rerank, you will need to get an API key from Cohere and add it to the .env file
+
+
 ## Features
 
 * **Google Search Integration:**  Leverages the Google Search API to retrieve relevant web pages.
@@ -31,6 +54,19 @@ All parameters are optional except `query`
 | `max_char` | Maximum number of characters per chunk (must be > `min_char` + `max_seq`) | No | 450     |
 | `max_characters_output` | Maximum number of characters in the output | No | 4800    |
 
+## Response
+
+You can expect a JSON response with the following keys
+
+`text` - (string) This is the set of all the chunks in paragraph form which should be passed to LLM.
+
+`errors` - (array) with error information if there are any.
+
+`reranked` - (bool) Whether the results were reranked.
+
+`snippets` - (array) list of snippets returned by Google.
+
+`url_references` - (object) which references the text by numbering in square brackets
 
 ## Google CSE API Key
 To search using Google, you will need the Google CSE (Custom Search Engine) `API Key` and `CX ID`

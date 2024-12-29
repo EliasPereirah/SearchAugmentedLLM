@@ -10,6 +10,8 @@ $COHERE_RERANK_MODEL = $_ENV['COHERE_RERANK_MODEL'] ?? '';
 $GOOGLE_SEARCH_API_KEY  = $_ENV['GOOGLE_SEARCH_API_KEY'] ?? '';
 $GOOGLE_SEARCH_CX = $_ENV['GOOGLE_SEARCH_CX'] ?? '';
 
+
+
 /*
 if(!empty($_POST['GOOGLE_SEARCH_API_KEY'])){
     $GOOGLE_SEARCH_API_KEY = $_POST['GOOGLE_SEARCH_API_KEY'];
@@ -24,7 +26,7 @@ const TIME_OUT = 6; // Maximum time (seconds) for a request to each link
 
 const MAX_RESULTS = 9; // Maximum number of Google Search results
 const MAX_CHUNKS = 100; // Maximum number of chunks to generate
-const DO_RERANK = true; // Rerank results for better quality (requires Cohere API key) //
+$DO_RERANK = true; // Rerank results for better quality (requires Cohere API key) //
 const MAX_SEQ = 51; // Maximum word length inside a chunk (longer sequences are removed)
 const MIN_CHAR = 300; // Minimum number of characters per chunk
 const MAX_CHAR = 450; // Maximum number of characters per chunk (must be > min_char + max_seq)
@@ -39,3 +41,8 @@ define("COHERE_RERANK_MODEL", $COHERE_RERANK_MODEL);
 define("GOOGLE_SEARCH_API_KEY", $GOOGLE_SEARCH_API_KEY);  // API key: https://developers.google.com/custom-search/v1/overview?hl=pt-br
 define("GOOGLE_SEARCH_CX", $GOOGLE_SEARCH_CX);  // CX ID: https://programmablesearchengine.google.com/controlpanel/all
 
+if($COHERE_API_KEY == ''){
+    $DO_RERANK = false;
+}
+
+define('DO_RERANK', $DO_RERANK);
