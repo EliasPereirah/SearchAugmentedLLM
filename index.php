@@ -22,7 +22,7 @@ $TextToChunk = new \App\TextToChunk();
 $Cohere = new \App\Cohere();
 
 $query = $_POST['query'] ?? $_GET['query'] ?? '';
-$language = $_POST['language'] ?? $_GET['language']  ?? 'pt-BR';
+$language = $_POST['language'] ?? $_GET['language']  ?? '';
 $errors = [];
 
 $max_results = $_GET['max_results'] ?? $_POST['max_results'] ?? MAX_RESULTS; // Google Search maximum results
