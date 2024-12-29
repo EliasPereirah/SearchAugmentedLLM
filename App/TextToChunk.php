@@ -57,8 +57,11 @@ class TextToChunk
     {
         $text = preg_replace("/</", "\n<", $text);
         $text = strip_tags($text);
-        $text = preg_replace('/\t+/', "\n", $text);
-        $text = preg_replace('/\R+/', "\n", $text);
+        $text = preg_replace('/\t+/', " ", $text);
+        $text = preg_replace('/\R+/', " ", $text);
+        $text = preg_replace("/\[\s+?(\d+)\s+?]/", " ", $text); // remove [\d] characters, ex [1] or [ 2 ]
+
+        $text = preg_replace('/\s+/', " ", $text);
         return $text;
     }
 

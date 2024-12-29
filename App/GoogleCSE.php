@@ -4,6 +4,7 @@ use Exception;
 
 class GoogleCSE {
     private array $search_results;
+    private array $snippets = [];
 
     /**
      * @throws Exception
@@ -59,10 +60,21 @@ class GoogleCSE {
     public function getItems(bool $only_links = false):array {
         $results = $this->search_results;
         $this->search_results = []; // reset
+        $all_items = $results[0]->items ?? [];
+        foreach ($all_items as $item){
+            $this->snippets[] = $item->snippet = strip_tags($item->snippet);
+        }
         if($only_links){
             return $this->getLinks($results);
         }
         return $results;
+    }
+
+    public function getSnippets():array
+    {
+        $snippets = $this->snippets;
+        $this->snippets = []; // reset
+        return $snippets;
     }
 
 

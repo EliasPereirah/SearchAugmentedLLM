@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 require_once __DIR__ . "/bootstrap.php";
 $ParallelRequest = new \App\ParallelRequest(10,3);
-$time_out = $_GET['time_out'] ?? $_POST['time_out'] ?? 5;
+$time_out = $_GET['time_out'] ?? $_POST['time_out'] ?? TIME_OUT;
 $time_out = (int) $time_out; // Maximum time that a curl request to links extracted from Google search will wait
 $ParallelRequest->setTimeout($time_out); // in seconds
 
@@ -19,27 +19,27 @@ $TextToChunk = new \App\TextToChunk();
 $Cohere = new \App\Cohere();
 
 $query = $_POST['query'] ?? $_GET['query'] ?? '';
-$language = $_GET['language']  ?? '';
+$language = $_POST['language'] ?? $_GET['language']  ?? 'pt-BR';
 $errors = [];
 
-$max_results = $_GET['max_results'] ?? $_POST['max_results'] ?? 4; // Google Search maximum results
+$max_results = $_GET['max_results'] ?? $_POST['max_results'] ?? MAX_RESULTS; // Google Search maximum results
 $max_results = (int) $max_results;
 
-$max_chunks = $_GET['max_chunks'] ?? $_POST['max_chunks'] ?? 100;
-
+$max_chunks = $_GET['max_chunks'] ?? $_POST['max_chunks'] ?? MAX_CHUNKS;
+$max_chunks = (int) $max_chunks;
 if ($max_results > $max_chunks) {
     $errors[] = ["max_results exceeds maximum number of chunks"];
 }
 
-$do_rerank = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? true;
+$do_rerank = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? DO_RERANK;
 $do_rerank = (bool) $do_rerank;
 
 // $min_char The minimum number of characters a chunk must have
 // $max_char The maximum number of characters a chunk must have - must be greater than the sum of ($min_char + $max_seq)
 // $max_seq The maximum allowed length for words inside the chunk. Longer sequences then $max_seq  will be removed.
-$min_char = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? 300;
-$max_char = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? 450;
-$max_seq = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? 51;
+$min_char = $_GET['min_char'] ?? $_POST['min_char'] ?? MIN_CHAR;
+$max_char = $_GET['max_char'] ?? $_POST['max_char'] ?? MAX_CHAR;
+$max_seq = $_GET['max_seq'] ?? $_POST['max_seq'] ?? MAX_SEQ;
 
 $min_char = (int) $min_char;
 $max_char = (int) $max_char;
@@ -47,7 +47,7 @@ $max_seq = (int) $max_seq;
 
 
 // maximum number of characters returned as output.
-$max_characters_output = $_GET['max_chars_output'] ?? $_POST['max_chars_output'] ?? 2500;
+$max_characters_output = $_GET['max_chars_output'] ?? $_POST['max_chars_output'] ?? MAX_CHARACTERS_OUTPUT;
 $max_characters_output = (int) $max_characters_output;
 
 $all_data = [];
@@ -55,7 +55,8 @@ if ($query) {
     $all_links = [];
     try {
         // make a search on Google and return just the links
-        $all_links = $GoogleCSE->search($query, $max_results)->getItems(true);
+        $all_links = $GoogleCSE->search($query, $max_results, 0, $language)->getItems(true);
+        $arr_snippets = $GoogleCSE->getSnippets();
     } catch (Exception $e) {
         $errors['google_cse'] = $e->getMessage();
     }
@@ -68,26 +69,33 @@ if ($query) {
     if($request_errors){
         $errors[] = $request_errors;
     }
-    $max_chunks_per_url = (int) ($max_chunks / count($results));
-    foreach ($results as $item) {
-        $raw_html = $item->html;
-        $url = $item->url;
-        try {
-            $readability = $MainContentExtractor->getMainContent($raw_html);
-            $main_html = $readability->getContent();
-            if(empty($main_html)){
-                $main_html = ''; // null will cause errors
-            }
-            $chunks = $TextToChunk->makeChunks($main_html, $max_chunks_per_url, $min_char, $max_char, $max_seq);
-            $all_data[] = (object) [
-                "url" => $url,
-                'chunks' => $chunks
-            ];
 
-        } catch (Exception $e) {
-            $errors['readability'] = $e->getMessage()." - url: $url";
-        }
-    } // end foreach
+    $total_results = count($results);
+    if($total_results > 0){
+        $max_chunks_per_url = (int) ($max_chunks / count($results));
+        foreach ($results as $item) {
+            $raw_html = $item->html;
+            $url = $item->url;
+            try {
+                $readability = $MainContentExtractor->getMainContent($raw_html);
+                $main_html = $readability->getContent();
+                if(empty($main_html)){
+                    $main_html = ''; // null will cause errors
+                }
+                $chunks = $TextToChunk->makeChunks($main_html, $max_chunks_per_url, $min_char, $max_char, $max_seq);
+                $all_data[] = (object) [
+                    "url" => $url,
+                    'chunks' => $chunks
+                ];
+
+            } catch (Exception $e) {
+                $errors['readability'] = $e->getMessage()." - url: $url";
+            }
+        } // end foreach
+    }else{
+        $do_rerank = false;
+    }
+
 
     $reranks = [];
     $text = '';
@@ -159,5 +167,9 @@ if ($query) {
     }
 }else{
     $data = ["text" => "", "msg"=> 'No search query were passed'];
+}
+
+if(!empty($arr_snippets)){
+    $data['snippets'] = $arr_snippets;
 }
 echo json_encode($data);

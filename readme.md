@@ -20,16 +20,16 @@ When making an HTTP request to the API, you can pass the following parameters (G
 All parameters are optional except `query`
 
 | Parameter | Description | Required | Default |
-|---|---|---|---|
-| `query` | The search query | Yes |  |
-| `time_out` | Maximum time (seconds) for a request to each link | No | 5 |
-| `max_results` | Maximum number of Google Search results | No | 5 |
-| `max_chunks` | Maximum number of chunks to generate | No | 100 |
-| `do_rerank` | Rerank results for better quality (requires Cohere API key) | No | true |
-| `max_seq` | Maximum word length inside a chunk (longer sequences are removed) | No | 51 |
-| `min_char` | Minimum number of characters per chunk | No | 300 |
-| `max_char` | Maximum number of characters per chunk (must be > `min_char` + `max_seq`) | No | 450 |
-| `max_characters_output` | Maximum number of characters in the output | No | 2500 |
+|---|---|---|---------|
+| `query` | The search query | Yes |         |
+| `time_out` | Maximum time (seconds) for a request to each link | No | 6       |
+| `max_results` | Maximum number of Google Search results | No | 9       |
+| `max_chunks` | Maximum number of chunks to generate | No | 100     |
+| `do_rerank` | Rerank results for better quality (requires Cohere API key) | No | true    |
+| `max_seq` | Maximum word length inside a chunk (longer sequences are removed) | No | 51      |
+| `min_char` | Minimum number of characters per chunk | No | 300     |
+| `max_char` | Maximum number of characters per chunk (must be > `min_char` + `max_seq`) | No | 450     |
+| `max_characters_output` | Maximum number of characters in the output | No | 4800    |
 
 
 ## Google CSE API Key
@@ -47,7 +47,7 @@ To rerank you will also need to configure a Cohere API key in .env.
 
 Get your Cohere API key here: https://dashboard.cohere.com/api-keys
 
-# Cybersecurity
+# Security
 This project was developed mainly for home use via localhost.
 If you want to use it on a public hosting, it is recommended to add some restriction layer with login.
 
