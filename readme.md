@@ -40,19 +40,20 @@ This project was programmed to be used via REST API, you can use it either on lo
 ## API Parameters
 When making an HTTP request to the API, you can pass the following parameters (GET and POST are supported):
 
-All parameters are optional except `query`
+| Parameter               | Description                                                               | Required | Default |
+|-------------------------|---------------------------------------------------------------------------|----------|---------|
+| `query`                 | The search query                                                          | No       |         |
+| `url`                   | URL to extract content                                                    | No       |         |
+| `time_out`              | Maximum time (seconds) for a request to each link                         | No       | 6       |
+| `max_results`           | Maximum number of Google Search results                                   | No       | 9       |
+| `max_chunks`            | Maximum number of chunks to generate                                      | No       | 100     |
+| `do_rerank`             | Rerank results for better quality (requires Cohere API key)               | No       | true    |
+| `max_seq`               | Maximum word length inside a chunk (longer sequences are removed)         | No       | 51      |
+| `min_char`              | Minimum number of characters per chunk                                    | No       | 300     |
+| `max_char`              | Maximum number of characters per chunk (must be > `min_char` + `max_seq`) | No       | 450     |
+| `max_characters_output` | Maximum number of characters in the output                                | No       | 14000    |
 
-| Parameter | Description | Required | Default |
-|---|---|---|---------|
-| `query` | The search query | Yes |         |
-| `time_out` | Maximum time (seconds) for a request to each link | No | 6       |
-| `max_results` | Maximum number of Google Search results | No | 9       |
-| `max_chunks` | Maximum number of chunks to generate | No | 100     |
-| `do_rerank` | Rerank results for better quality (requires Cohere API key) | No | true    |
-| `max_seq` | Maximum word length inside a chunk (longer sequences are removed) | No | 51      |
-| `min_char` | Minimum number of characters per chunk | No | 300     |
-| `max_char` | Maximum number of characters per chunk (must be > `min_char` + `max_seq`) | No | 450     |
-| `max_characters_output` | Maximum number of characters in the output | No | 4800    |
+**Update**: Now, if you want, instead of passing a search term in the `query` parameter, you can pass the `url` you want to get the content from.
 
 ## Response
 
@@ -95,8 +96,6 @@ Please note that this project is currently in **beta** and is provided "as is" w
 This project leverages the following resources:
 
 **Readability** PHP library by FiveFilters - https://github.com/fivefilters/readability.php
-
-Thanks to FiveFilters for their valuable work!
 
 **Cohere API**: Used for re-ranking content.
 

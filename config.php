@@ -30,7 +30,7 @@ $DO_RERANK = true; // Rerank results for better quality (requires Cohere API key
 const MAX_SEQ = 51; // Maximum word length inside a chunk (longer sequences are removed)
 const MIN_CHAR = 300; // Minimum number of characters per chunk
 const MAX_CHAR = 450; // Maximum number of characters per chunk (must be > min_char + max_seq)
-const MAX_CHARACTERS_OUTPUT = 4800; // Maximum number of characters in the output
+const MAX_CHARACTERS_OUTPUT = 14000; // Maximum number of characters in the output
 
 
 

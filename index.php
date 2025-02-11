@@ -22,6 +22,7 @@ $TextToChunk = new \App\TextToChunk();
 $Cohere = new \App\Cohere();
 
 $query = $_POST['query'] ?? $_GET['query'] ?? '';
+$url = $_POST['url'] ?? $_GET['url'] ?? '';
 $language = $_POST['language'] ?? $_GET['language']  ?? '';
 $errors = [];
 
@@ -54,15 +55,24 @@ $max_characters_output = $_GET['max_chars_output'] ?? $_POST['max_chars_output']
 $max_characters_output = (int) $max_characters_output;
 
 $all_data = [];
-if ($query) {
-    $all_links = [];
-    try {
-        // make a search on Google and return just the links
-        $all_links = $GoogleCSE->search($query, $max_results, 0, $language)->getItems(true);
-        $arr_snippets = $GoogleCSE->getSnippets();
-    } catch (Exception $e) {
-        $errors['google_cse'] = $e->getMessage();
+$all_links = [];
+$is_url = false;
+if ($query || ($url && filter_var($url, FILTER_VALIDATE_URL))) {
+    if($url) {
+        $is_url = true;
+        $do_rerank = false;
+        // If query was actually a URL, no search will be performed, instead the contents of the URL will be extracted.
+        $all_links[] = $url;
+    }else{
+        try {
+            // make a search on Google and return just the links
+            $all_links = $GoogleCSE->search($query, $max_results, 0, $language)->getItems(true);
+            $arr_snippets = $GoogleCSE->getSnippets();
+        } catch (Exception $e) {
+            $errors['google_cse'] = $e->getMessage();
+        }
     }
+
     foreach ($all_links as $link) {
         $ParallelRequest->addUrl($link);
     }
