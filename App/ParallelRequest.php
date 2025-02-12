@@ -8,6 +8,7 @@ class ParallelRequest
     private string $userAgent;
     private int $timeout = 3;
     private array $errors = [];
+    private int $maxFileSize = 5242880; // 5MB in bytes (5 * 1024 * 1024)
 
 
     public function __construct(int $maxConcurrent = 10, int $maxRedirections = 3)
@@ -29,6 +30,11 @@ class ParallelRequest
     public function setTimeout(int $timeout): void
     {
         $this->timeout = $timeout;
+    }
+
+    public function setMaxFileSize(int $sizeInBytes): void
+    {
+        $this->maxFileSize = $sizeInBytes;
     }
 
     /**
@@ -82,6 +88,8 @@ class ParallelRequest
                 curl_setopt($handle, CURLOPT_MAXREDIRS, $this->maxRedirections);
                 curl_setopt($handle, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
                 curl_setopt($handle, CURLOPT_HEADERFUNCTION, [$this, 'handleRedirect']);
+                curl_setopt($handle, CURLOPT_HEADERFUNCTION, [$this, 'handleHeader']);
+
 
                 curl_multi_add_handle($multiHandle, $handle);
                 $handles[$urlIndex] = $handle;
@@ -111,8 +119,18 @@ class ParallelRequest
                 $error = curl_error($done['handle']);
                 $httpCode = $info['http_code'];
 
+                $private = curl_getinfo($done['handle'], CURLINFO_PRIVATE);
+                $fileSize = $private['size'] ?? 0;
 
-                if ($httpCode < 200 || $httpCode > 299 || $error || !$isTextType) {
+                if ($fileSize > $this->maxFileSize) {
+                    $this->errors['size_error'][] = [
+                        "url" => $info['url'],
+                        'time' => $info['total_time'],
+                        'http_code' => $httpCode,
+                        'content_type' => $content_type,
+                        'error' => "File size ($fileSize) exceeds ($this->maxFileSize) maximum allowed size",
+                    ];
+                } else if ($httpCode < 200 || $httpCode > 299 || $error || !$isTextType) {
                     $this->errors['curl_error'][] = [
                         "url" => $info['url'],
                         'time' => $info['total_time'],
@@ -121,7 +139,7 @@ class ParallelRequest
                         'content_type' => $content_type
                     ];
                 } else {
-                    $all_results[] = (object) [
+                    $all_results[] = (object)[
                         'url' => $info['url'],
                         'time' => $info['total_time'],
                         'http_code' => $httpCode,
@@ -146,19 +164,20 @@ class ParallelRequest
 
     /**
      * Checks if string is a localhost address or an IP
-    **/
-    public function isLocalhostOrIP($url):bool {
+     **/
+    public function isLocalhostOrIP($url): bool
+    {
         $parsedUrl = parse_url($url);
         $host = strtolower($parsedUrl['host'] ?? '');
         $host = trim($host, '[].');
         if (str_ends_with($host, 'localhost')) {
             return true;
         }
-        if(str_starts_with($host, ':')) {
+        if (str_starts_with($host, ':')) {
             return true;
         }
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-           return true;
+            return true;
         }
         return false;
     }
@@ -174,5 +193,25 @@ class ParallelRequest
             }
         }
         return strlen($header);
+    }
+
+    private function handleHeader($ch, $header): int
+    {
+        $headerLength = strlen($header);
+
+        // Check for Content-Length header
+        if (stripos($header, 'Content-Length:') === 0) {
+            $length = (int)trim(substr($header, 15));
+            $private = curl_getinfo($ch, CURLINFO_PRIVATE);
+            $private['size'] = $length;
+            curl_setopt($ch, CURLOPT_PRIVATE, $private);
+
+            // If file is too large, abort the transfer
+            if ($length > $this->maxFileSize) {
+                return 0; // Abort transfer
+            }
+        }
+
+        return $headerLength;
     }
 }
