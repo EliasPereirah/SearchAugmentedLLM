@@ -11,9 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 require_once __DIR__ . "/bootstrap.php";
-$ParallelRequest = new \App\ParallelRequest(10,3);
+$ParallelRequest = new \App\ParallelRequest(10, 3);
 $time_out = $_GET['time_out'] ?? $_POST['time_out'] ?? TIME_OUT;
-$time_out = (int) $time_out; // Maximum time that a curl request to links extracted from Google search will wait
+$time_out = (int)$time_out; // Maximum time that a curl request to links extracted from Google search will wait
 $ParallelRequest->setTimeout($time_out); // in seconds
 
 $GoogleCSE = new \App\GoogleCSE();
@@ -23,20 +23,20 @@ $Cohere = new \App\Cohere();
 
 $query = $_POST['query'] ?? $_GET['query'] ?? '';
 $url = $_POST['url'] ?? $_GET['url'] ?? '';
-$language = $_POST['language'] ?? $_GET['language']  ?? '';
+$language = $_POST['language'] ?? $_GET['language'] ?? '';
 $errors = [];
 
 $max_results = $_GET['max_results'] ?? $_POST['max_results'] ?? MAX_RESULTS; // Google Search maximum results
-$max_results = (int) $max_results;
+$max_results = (int)$max_results;
 
 $max_chunks = $_GET['max_chunks'] ?? $_POST['max_chunks'] ?? MAX_CHUNKS;
-$max_chunks = (int) $max_chunks;
+$max_chunks = (int)$max_chunks;
 if ($max_results > $max_chunks) {
     $errors[] = ["max_results exceeds maximum number of chunks"];
 }
 
 $do_rerank = $_GET['do_rerank'] ?? $_POST['do_rerank'] ?? DO_RERANK;
-$do_rerank = (bool) $do_rerank;
+$do_rerank = (bool)$do_rerank;
 
 // $min_char The minimum number of characters a chunk must have
 // $max_char The maximum number of characters a chunk must have - must be greater than the sum of ($min_char + $max_seq)
@@ -45,25 +45,25 @@ $min_char = $_GET['min_char'] ?? $_POST['min_char'] ?? MIN_CHAR;
 $max_char = $_GET['max_char'] ?? $_POST['max_char'] ?? MAX_CHAR;
 $max_seq = $_GET['max_seq'] ?? $_POST['max_seq'] ?? MAX_SEQ;
 
-$min_char = (int) $min_char;
-$max_char = (int) $max_char;
-$max_seq = (int) $max_seq;
+$min_char = (int)$min_char;
+$max_char = (int)$max_char;
+$max_seq = (int)$max_seq;
 
 
 // maximum number of characters returned as output.
 $max_characters_output = $_GET['max_chars_output'] ?? $_POST['max_chars_output'] ?? MAX_CHARACTERS_OUTPUT;
-$max_characters_output = (int) $max_characters_output;
+$max_characters_output = (int)$max_characters_output;
 
 $all_data = [];
 $all_links = [];
 $is_url = false;
 if ($query || ($url && filter_var($url, FILTER_VALIDATE_URL))) {
-    if($url) {
+    if ($url) {
         $is_url = true;
         $do_rerank = false;
         // If query was actually a URL, no search will be performed, instead the contents of the URL will be extracted.
         $all_links[] = $url;
-    }else{
+    } else {
         try {
             // make a search on Google and return just the links
             $all_links = $GoogleCSE->search($query, $max_results, 0, $language)->getItems(true);
@@ -79,33 +79,33 @@ if ($query || ($url && filter_var($url, FILTER_VALIDATE_URL))) {
     $results = $ParallelRequest->request();
 
     $request_errors = $ParallelRequest->getError();
-    if($request_errors){
+    if ($request_errors) {
         $errors[] = $request_errors;
     }
 
     $total_results = count($results);
-    if($total_results > 0){
-        $max_chunks_per_url = (int) ($max_chunks / count($results));
+    if ($total_results > 0) {
+        $max_chunks_per_url = (int)($max_chunks / count($results));
         foreach ($results as $item) {
             $raw_html = $item->html;
             $url = $item->url;
             try {
                 $readability = $MainContentExtractor->getMainContent($raw_html);
                 $main_html = $readability->getContent();
-                if(empty($main_html)){
+                if (empty($main_html)) {
                     $main_html = ''; // null will cause errors
                 }
                 $chunks = $TextToChunk->makeChunks($main_html, $max_chunks_per_url, $min_char, $max_char, $max_seq);
-                $all_data[] = (object) [
+                $all_data[] = (object)[
                     "url" => $url,
                     'chunks' => $chunks
                 ];
 
             } catch (Exception $e) {
-                $errors['readability'] = $e->getMessage()." - url: $url";
+                $errors['readability'] = $e->getMessage() . " - url: $url";
             }
         } // end foreach
-    }else{
+    } else {
         $do_rerank = false;
     }
 
@@ -178,11 +178,20 @@ if ($query || ($url && filter_var($url, FILTER_VALIDATE_URL))) {
     if (count($errors) >= 1) {
         $data['errors'] = $errors;
     }
-}else{
-    $data = ["text" => "", "msg"=> 'No search query were passed'];
+} else {
+    $data = ["text" => "", "msg" => 'No search query were passed'];
+    if (!empty($url)) {
+        $data = ["text" => "", "msg" => "Bad URL: $url"];
+    }
 }
 
-if(!empty($arr_snippets)){
+if (!empty($arr_snippets)) {
     $data['snippets'] = $arr_snippets;
+}
+$json = json_encode($data);
+if(!$json){
+    if(!empty($data['text'])){
+        $data['text'] = mb_convert_encoding($data['text'], 'UTF-8');
+    }
 }
 echo json_encode($data);

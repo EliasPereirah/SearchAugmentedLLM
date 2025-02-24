@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3fba1d8f14113e63859cc962a1daefe",
+    "content-hash": "56816e43294ffc67b6756d782d59f70e",
     "packages": [
         {
             "name": "fivefilters/readability.php",
