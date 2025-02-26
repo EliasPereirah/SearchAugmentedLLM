@@ -42,7 +42,9 @@ class ParallelRequest
      **/
     public function addUrl(string $url): void
     {
-        if ($this->isValidURL($url)) {
+
+
+        if ($this->isValidURL($url) && !$this->isLocalhostOrIP($url)) {
             $this->urls[] = ['url' => $url];
         } else {
             $this->errors['bad_urls'][] = $url;
